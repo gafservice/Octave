@@ -13,8 +13,9 @@ C_ss = ss(M_C);
 A_ss = ss(M_A);
 
 gruaSS = ss(C_ss)
-% Invertir la matriz
-A_invertida = inv(C_ss)
+
+A_transp2 = transpose(C_ss)
+A_transp1 = C_ss'
 
 % Matrices de espacio de estado de los modelos SISO
 A_C = C_ss.A;
