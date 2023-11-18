@@ -5,7 +5,7 @@ pkg load control
 s = tf('s');
 
 % Modelos SISO
-M_C = 0.05 / (s^2 + 0.8 * s)
+
 M_A = (-0.4 * (s + 2)) / (s^2 + 0.1 * s + 30)
 
 % Modelos en espacio de estado
