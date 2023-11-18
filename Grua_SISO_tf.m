@@ -7,7 +7,7 @@ K = 1;  % Ganancia
 T = 2;  % Constante de tiempo
 
 % Ecuación de transferencia
-numerator = [K+1];
+numerator = [K];
 denominator = [T, 1];
 G = tf(numerator, denominator);
 
