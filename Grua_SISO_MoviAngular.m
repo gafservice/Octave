@@ -14,8 +14,8 @@ s=tf("s")
 
 
 E = 1/(s^2+s)
-t = 0.5
-n = 5
+t = 8
+n = 3
 [num,den] = padecoef (t, n)
 F = tf(num,den)/(s^2+s)
 G = E - F
