@@ -29,7 +29,7 @@ whos x1 x2
 whos M22;
 whos X;
 whos V02;
-m22x = M22* X;
+m22x = M22 * X;
 whos m22x;
 xm22x = X' * M22* X;
 whos xm22x;
