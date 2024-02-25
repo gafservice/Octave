@@ -188,15 +188,15 @@ hold on
 #del punto 4.3. 
  # el siguiente codigo para calcular y graficar los minimos de la funcion
  # fueron consultados de: https://chat.openai.com/c/1acd1a3c-9def-4fdc-adc7-1cdac79cf302
-[gx, gy] = gradient(solu02);
+####[gx, gy] = gradient(solu02);
 # Agregar contornos para visualización adicional
-    hold on;
-    contour(x1, x2, solu02, 20, 'LineColor', 'k', 'LineWidth', 1.5);
+####    hold on;
+####    contour(x1, x2, solu02, 20, 'LineColor', 'k', 'LineWidth', 1.5);
 
     % Agregar los vectores de gradiente con quiver
-    quiver(x1, x2, -gx, -gy, 'Color', 'r', 'LineWidth', 1.5);
+####    quiver(x1, x2, -gx, -gy, 'Color', 'r', 'LineWidth', 1.5);
 
-    hold off;
+####hold off;
 
 
 end
