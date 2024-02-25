@@ -53,7 +53,7 @@ cuadra = (X' * M22* X).^2;
 whos cuadra ;
 sumatoria = sum((X' * M22* X).^2);
 whos sumatoria;
-.
+
 
 
 
