@@ -39,10 +39,6 @@ cuadra = (X' * M22* X).^2;
 whos cuadra ;
 sumatoria = sum((X' * M22* X).^2);
 whos sumatoria;
-
-
-
-
 solu02 =0.5 * sum((X' * M22* X).^2) + V02' * X;
 whos solu02;
 
@@ -53,7 +49,7 @@ solu02 = reshape(solu02, size(x1));
     xlabel('x1');
     ylabel('x2');
     zlabel('solu');
-    title('Resultado Evaluar ecuacion con una Matriz simétrica no diagonal,  ');
+    title('Resultado Evaluar ecuacion ');
 hold on
  
 M22_inv = inv(M22);
@@ -62,7 +58,14 @@ x_min = -M22_inv * V02;
 whos x_min;
 #X = [x1(:) x2(:)]';
 
+##############################################3
+[min_val, min_idx] = min(solu02);
+[min_x1, min_x2] = ind2sub(size(solu02), min_idx);
 
-
+hold on;
+  contour(x1, x2, solu02, 20, 'LineColor', 'k', 'LineWidth', 1.5);
+##Demarcar el valor mínimo
+    plot3(x1_range(min_x1), x2_range(min_x2), min_val, 'ro', 'MarkerSize', 10);
+    hold off;
 
 end
