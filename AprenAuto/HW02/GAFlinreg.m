@@ -80,10 +80,43 @@ title('Regresión Lineal con Intercepción');
 ##legend('Datos Origs','Línea de Reón');
 
 hold off;
-numero_notacion_cientifica = rz;
+
+
+figure
+
+
+% Crear una imagen de ejemplo
+
+imagen = zeros(100, 100); % Puedes cargar tu propia imagen o generar una aquí
+imagen = ones(100, 100, 3); 
+% Valor que deseas mostrar como etiqueta
+eti01= (['Valor de la casa', p(1,1)]);
+format short
+dato11 = p(1,1);
+stre11 = num2str(dato11);
+dato12 = p(1,2);
+stre12 = num2str(dato12);
+
+dato21 = rz(1);
+stre21 = num2str(rz(1));
 
 
 
+eti01 = ['las una casa de:  ', stre11, '  m2 con: ', stre12, ' dormitorios '];
+% Coordenadas donde se ubicará la etiqueta en la imagen
+x1 = 1;
+y1 = 40;
+
+eti02 = ['Puede llegar a costar:  ', stre21, '  dollares '];
+x2= 1;
+y2 = 60;
+% Mostrar la imagen
+imshow(imagen);
+
+% Superponer el valor como una etiqueta en la imagen
+text(x1, y1, num2str(eti01), 'color', 'blue', 'FontSize', 20, 'FontWeight', 'bold');
+
+text(x2, y2, num2str(eti02), 'color', 'red', 'FontSize', 20, 'FontWeight', 'bold');
 
   
     
