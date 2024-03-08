@@ -38,7 +38,7 @@
 ## @end deftypefn
 function varargout=linreg(p,X,z)
  
-  format short
+
   ## This code is for simple linear regression
 % Graficar la matriz p
 % Visualizar las filas y columnas de p
@@ -77,9 +77,14 @@ zlabel('Valor z');
 title('Regresión Lineal con Intercepción');
 
 % Mostrar la leyenda
-legend('Datos Originales', 'Línea de Regresión');
+##legend('Datos Origs','Línea de Reón');
 
 hold off;
+numero_notacion_cientifica = rz;
+
+
+
+
   
     
 endfunction
