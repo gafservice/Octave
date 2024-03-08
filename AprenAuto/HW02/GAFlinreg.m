@@ -37,6 +37,8 @@
 ## [rz,theta]=linreg(p,X,z)
 ## @end deftypefn
 function varargout=linreg(p,X,z)
+ 
+  format short
   ## This code is for simple linear regression
 % Graficar la matriz p
 % Visualizar las filas y columnas de p
@@ -55,7 +57,7 @@ function varargout=linreg(p,X,z)
     ## The user also wants the parameters theta
     varargout{2}=theta;
   endif
-  
+ 
   % Graficar los datos originales
  %scatter3(p(:,1), p(:,2), z, 'o', 'filled');
  %hold on;
