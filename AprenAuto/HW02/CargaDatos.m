@@ -26,5 +26,3 @@ y = dlmread (ubi_file, 2, 2, 2:5)
 ## disp(size(X))
 ## disp(size(z))
 
-
-
