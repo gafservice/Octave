@@ -2,8 +2,7 @@
 X = [1; 2; 3; 4; 5];   % Variable predictora
 z = [3; 6; 8; 11; 13];  % Variable de respuesta
 
-% Construir la matriz de diseño con el término de intercepción
-X_with_intercept = [ones(size(X)), X];
+
 
 % Calcular los coeficientes de regresión utilizando la pseudoinversa
 theta = pinv(X_with_intercept) * z;

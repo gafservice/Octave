@@ -47,6 +47,11 @@ function varargout=linreg(p,X,z)
   ##
   ## (The following two lines are copied from linreg_nointercept.m and
   ##  should be replaced with correct code)
+  Pseudoinversa:
+
+Calculemos ahora la pseudoinversa C+C+ utilizando la fórmula de la pseudoinversa de Moore-Penrose:
+
+
   theta=pinv(X)*z(:);
   rz=p*theta;
 
@@ -121,7 +126,7 @@ text(x1, y1, num2str(eti01), 'color', 'blue', 'FontSize', 20, 'FontWeight', 'bol
 
 text(x2, y2, num2str(eti02), 'color', 'red', 'FontSize', 20, 'FontWeight', 'bold');
 
-  
+  por
     
 endfunction
 
