@@ -3,10 +3,8 @@
 % Tarea 3
 % (C) 2024 <Su Copyright AQUÍ>
 
-% Hypothesis function used in logistic regression
-function h=logreg_hyp(theta,X)
-
+% Loss function used in logistic regression
+function err=logreg_loss(theta,X,y)
   ## Dummy random implementation
-  h=rand(rows(X),1); 
-
+  err=rand();
 endfunction
