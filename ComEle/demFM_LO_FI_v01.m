@@ -1,77 +1,100 @@
-% Parámetros de la señal de entrada
-f_RF = 110e6; % Frecuencia de la señal RF en Hz
-f_audio1 = 13.125e3; % Frecuencia del primer canal de audio en Hz
-f_audio2 = 31.875e3; % Frecuencia del segundo canal de audio en Hz
-f_audio3 = 50.625e3; % Frecuencia del tercer canal de audio en Hz
+% Duración de la señal en segundos
+duration = 1; 
+% Frecuencia de muestreo en Hz
+fs = 1e7; 
+% Vector de tiempo
+t = linspace(0, duration, fs); 
 
-% Parámetros del oscilador local
-f_LO = 99.3e6; % Frecuencia del oscilador local en Hz
+% Frecuencia de RF a sintonizar en Hz
+freq_RF = 110e6;
+% Frecuencia intermedia (FI) en Hz
+freq_FI = 10.7e6;
+% Ancho de banda en Hz
+bandwidth = 120e3;
 
-% Parámetros de la señal modulada en FM
-T = 1e-4; % Duración de la señal en segundos
-t = 0:1e-9:T; % Vector de tiempo con paso de 1 ns para señal analógica
+% Frecuencia del oscilador local (LO) en Hz
+freq_LO = freq_RF - freq_FI;
 
-% Señales de audio
-audio1 = sin(2 * pi * f_audio1 * t);
-audio2 = sin(2 * pi * f_audio2 * t);
-audio3 = sin(2 * pi * f_audio3 * t);
+% Asegurarse de que FMmodulada tenga la longitud correcta
+if length(FMmodulada) ~= length(t)
+    original_t = linspace(0, duration, length(FMmodulada));
+    FMmodulada = interp1(original_t, FMmodulada, t);
+end
 
-% Señal combinada de audio
-audio_signal = audio1 + audio2 + audio3;
+% Asignar la señal de RF a FMmodulada
+signal_RF = FMmodulada;
 
-% Índice de modulación
-kf = 1e5; % Coeficiente de frecuencia para la modulación
+% Generación de la señal del LO (sinusoidal a 99.3 MHz)
+signal_LO = sin(2 * pi * freq_LO * t);
 
-% Señal FM modulada
-fm_signal = cos(2 * pi * f_RF * t + kf * cumsum(audio_signal));
+% Mezcla de señales (multiplicación para obtener la FI)
+mixed_signal = signal_RF .* signal_LO;
 
-% Señal del oscilador local
-lo_signal = cos(2 * pi * f_LO * t);
+% Transformada de Fourier de la señal mezclada
+N = length(t);
+FFT_mixed = fft(mixed_signal);
+f = linspace(-fs/2, fs/2, N);
 
-% Mezcla de la señal RF con el oscilador local
-mixed_signal = fm_signal .* lo_signal;
+% Crear un filtro pasabajo en el dominio de la frecuencia
+fc = (freq_FI + bandwidth/2); % Frecuencia de corte
+H = double(abs(f) <= fc);
 
-% Demodulación de la señal (En este caso, no se realiza una demodulación en el código ya que estamos en el dominio analógico)
+% Aplicar el filtro a la señal en el dominio de la frecuencia
+filtered_FFT = FFT_mixed .* fftshift(H);
 
-% Visualización de las señales en el dominio del tiempo
-figure;
-subplot(3, 1, 1);
-plot(t, fm_signal);
-title('Señal FM Modulada (Dominio del Tiempo)');
+% Transformada inversa de Fourier para obtener la señal filtrada
+filtered_signal = ifft(filtered_FFT);
+
+% Visualización de los resultados en el dominio del tiempo
+figure('Position', [100, 100, 1200, 800]);
+
+subplot(4,1,1);
+plot(t, signal_RF);
+title('Señal de RF (110 MHz)');
 xlabel('Tiempo (s)');
 ylabel('Amplitud');
 
-subplot(3, 1, 2);
+subplot(4,1,2);
+plot(t, signal_LO);
+title('Señal del Oscilador Local (99.3 MHz)');
+xlabel('Tiempo (s)');
+ylabel('Amplitud');
+
+subplot(4,1,3);
 plot(t, mixed_signal);
-title('Señal Mezclada (Dominio del Tiempo)');
+title('Señal Mezclada (FI sin filtrar)');
 xlabel('Tiempo (s)');
 ylabel('Amplitud');
 
-subplot(3, 1, 3);
-plot(t, audio_signal);
-title('Señal de Audio (Dominio del Tiempo)');
+subplot(4,1,4);
+plot(t, real(filtered_signal));
+title('Señal Filtrada (FI de 10.7 MHz)');
 xlabel('Tiempo (s)');
 ylabel('Amplitud');
 
-% Visualización de las señales en el dominio de la frecuencia
-figure;
-subplot(3, 1, 1);
-fft_fm_signal = abs(fftshift(fft(fm_signal)));
-plot(t, fft_fm_signal);
-title('Espectro de la Señal FM Modulada (Dominio de la Frecuencia)');
+% Visualización de los resultados en el dominio de la frecuencia
+figure('Position', [100, 100, 1200, 800]);
+
+subplot(4,1,1);
+plot(f, abs(fftshift(fft(signal_RF))));
+title('Espectro de Frecuencia de la Señal RF');
 xlabel('Frecuencia (Hz)');
 ylabel('Amplitud');
 
-subplot(3, 1, 2);
-fft_mixed_signal = abs(fftshift(fft(mixed_signal)));
-plot(t, fft_mixed_signal);
-title('Espectro de la Señal Mezclada (Dominio de la Frecuencia)');
+subplot(4,1,2);
+plot(f, abs(fftshift(fft(signal_LO))));
+title('Espectro de Frecuencia de la Señal LO');
 xlabel('Frecuencia (Hz)');
 ylabel('Amplitud');
 
-subplot(3, 1, 3);
-fft_audio_signal = abs(fftshift(fft(audio_signal)));
-plot(t, fft_audio_signal);
-title('Espectro de la Señal de Audio (Dominio de la Frecuencia)');
+subplot(4,1,3);
+plot(f, abs(fftshift(FFT_mixed)));
+title('Espectro de Frecuencia de la Señal Mezclada');
+xlabel('Frecuencia (Hz)');
+ylabel('Amplitud');
+
+subplot(4,1,4);
+plot(f, abs(fftshift(filtered_FFT)));
+title('Espectro de Frecuencia de la Señal Filtrada');
 xlabel('Frecuencia (Hz)');
 ylabel('Amplitud');
