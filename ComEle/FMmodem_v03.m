@@ -14,7 +14,7 @@ Center = 1;
 
 BandWidth = 120000; % Frecuencia central (Hz)
 FXporta = 110000000;  % Ancho de banda (Hz)
-fxpiloto = 1875; % 1875 hz
+fxpiloto = 1875; %  hz
 fxbase = fxpiloto * 2; % 3750 hz
 fxbaja = fxpiloto * 7; % 13125 hz
 fxmedia = fxpiloto * 17; % 31875  hz
@@ -56,7 +56,7 @@ desCH03 = sin(2*pi*(fxCenter + fxAlta).*t);
 subporta = fxPiloto + desCH01 + desCH02 + desCH03;
 
 % Modulación FM
-FMmodulada = cos(2*pi*FXporta*t + IndMod*subporta);
+FMmodulada = cos(2*pi*FXporta*t + IndMod*subporta)
 
 % Transformada de Fourier
 N = length(t);
