@@ -1,5 +1,5 @@
 % Parámetros iniciales
-fs = 1e8; % Frecuencia de muestreo (Hz) ajustada
+fs = 1e6; % Frecuencia de muestreo (Hz)
 t = linspace(0, 1, fs); % Vector de tiempo de 1 segundo
 
 % Crear señal de prueba centrada en 110 MHz con componentes en frecuencias específicas
@@ -32,16 +32,15 @@ IF_signal = FMmodulada .* osc_lo;
 IF_signal_freq = fft(IF_signal);
 f_IF = linspace(-fs/2, fs/2, length(IF_signal_freq)) + fc - f_lo; % Ajuste para centrar en la nueva frecuencia intermedia de 10.7 MHz
 
-% Crear un filtro pasabanda para la frecuencia intermedia (10.64 MHz a 10.76 MHz)
-n = 1000; % Orden del filtro
-Wn = [10.64e6 10.76e6] / (fs / 2); % Rango de frecuencias normalizado
-filtro_pasabanda = fir1(n, Wn, 'bandpass');
+% Crear un filtro paso bajo para 10.7 MHz
+cutoff_freq = 10.7e6; % Frecuencia de corte del filtro
+lp_filter = abs(f_IF) <= cutoff_freq; % Crear filtro paso bajo
 
-% Filtrar la señal IF
-IF_filtered = filtfilt(filtro_pasabanda, 1, IF_signal);
+% Aplicar el filtro paso bajo en el dominio de la frecuencia
+IF_signal_freq_filtered = IF_signal_freq .* lp_filter;
 
-% Transformar la señal IF filtrada al dominio de la frecuencia
-IF_filtered_freq = fft(IF_filtered);
+% Transformar la señal IF filtrada de vuelta al dominio del tiempo
+IF_signal_filtered = ifft(IF_signal_freq_filtered);
 
 % Graficar las señales en el dominio de la frecuencia
 figure;
@@ -62,18 +61,18 @@ xlabel('Frecuencia (Hz)');
 ylabel('Magnitud');
 xlim([f_lo - 500e3, f_lo + 500e3]); % Mostrar un rango más cerrado alrededor de 99.3 MHz para mejor visualización
 
-% Señal IF en el Dominio de la Frecuencia
+% Señal IF en el Dominio de la Frecuencia (sin filtrar)
 subplot(4,1,3);
 plot(f_IF, fftshift(abs(IF_signal_freq)));
-title('Señal Intermedia (IF) en el Dominio de la Frecuencia');
+title('Señal Intermedia (IF) en el Dominio de la Frecuencia (sin filtrar)');
 xlabel('Frecuencia (Hz)');
 ylabel('Magnitud');
 xlim([10.2e6, 11.2e6]); % Mostrar un rango más cerrado alrededor de 10.7 MHz para mejor visualización
 
-% Señal IF Filtrada en el Dominio de la Frecuencia
+% Señal IF en el Dominio de la Frecuencia (filtrada)
 subplot(4,1,4);
-plot(f_IF, fftshift(abs(IF_filtered_freq)));
-title('Señal Intermedia (IF) Filtrada en el Dominio de la Frecuencia');
+plot(f_IF, fftshift(abs(IF_signal_freq_filtered)));
+title('Señal Intermedia (IF) en el Dominio de la Frecuencia (filtrada)');
 xlabel('Frecuencia (Hz)');
 ylabel('Magnitud');
 xlim([10.2e6, 11.2e6]); % Mostrar un rango más cerrado alrededor de 10.7 MHz para mejor visualización
@@ -91,12 +90,4 @@ disp('Información de la señal IF:');
 disp(['Longitud: ', num2str(length(IF_signal))]);
 disp(['Rango de valores: ', num2str(min(IF_signal)), ' a ', num2str(max(IF_signal))]);
 
-% Desplegar los valores alrededor de las frecuencias de interés en la señal IF filtrada
-frecuencias_interes = [10.7e6 + f1, 10.7e6 + f2, 10.7e6 + f3, 10.7e6 + f4];
-for i = 1:length(frecuencias_interes)
-    % Encontrar el índice más cercano a la frecuencia de interés
-    [~, idx] = min(abs(f_IF - frecuencias_interes(i)));
-    % Mostrar la frecuencia de interés y los valores alrededor
-    disp(['Valores alrededor de la frecuencia ', num2str(frecuencias_interes(i)), ' Hz:']);
-    disp(IF_filtered(max(1, idx-5):min(length(IF_filtered), idx+5)));
-end
+
