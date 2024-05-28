@@ -1,98 +1,116 @@
-% Duración de la señal en segundos
-duration = 1; 
-% Frecuencia de muestreo en Hz
-fs = 1e7; 
-% Vector de tiempo
-t = linspace(0, duration, fs); 
+% Parámetros iniciales
+fs = 20e6; % Frecuencia de muestreo (Hz)
+t = linspace(0, 1, fs); % Vector de tiempo de 1 segundo
 
-% Frecuencia de RF a sintonizar en Hz
-freq_RF = 110e6;
-% Frecuencia intermedia (FI) en Hz
-freq_FI = 10.7e6;
-% Ancho de banda en Hz
-bandwidth = 120e3;
+% Crear señal de prueba centrada en 110 MHz con componentes en frecuencias específicas
+fc = 110e6; % Frecuencia central de 110 MHz
+f1 = 1875; % Frecuencia de 1875 Hz
+f2 = 13125; % Frecuencia de 13125 Hz
+f3 = 31875; % Frecuencia de 31875 Hz
+f4 = 58625; % Frecuencia de 58625 Hz
 
-% Frecuencia del oscilador local (LO) en Hz
-freq_LO = freq_RF - freq_FI;
+% Generar la señal de prueba (modulación de amplitud)
+test_signal = cos(2 * pi * f1 * t) + cos(2 * pi * f2 * t) + cos(2 * pi * f3 * t) + cos(2 * pi * f4 * t);
+FMmodulada = test_signal .* cos(2 * pi * fc * t);
 
-% Generación de la señal de RF (sinusoidal a 110 MHz)
-%FMmodulada = sin(2 * pi * freq_RF * t);  % Ejemplo de señal FM modulada
-signal_RF = FMmodulada;
+% Transformar la señal de prueba al dominio de la frecuencia
+FMmodulada_freq = abs(fftshift(fft(FMmodulada)));
+f_FMmodulada = linspace(-fs/2, fs/2, length(FMmodulada_freq)) + fc; % Ajuste para centrar en 110 MHz
 
-% Generación de la señal del LO (sinusoidal a 99.3 MHz)
-signal_LO = sin(2 * pi * freq_LO * t);
+% Crear oscilador local de 120.7 MHz para obtener una IF de 10.7 MHz
+f_lo = 120.7e6; % Frecuencia del oscilador local
+osc_lo = cos(2 * pi * f_lo * t); % Señal del oscilador local
 
-% Mezcla de señales (multiplicación para obtener la FI)
-mixed_signal = signal_RF .* signal_LO;
+% Transformar el oscilador local al dominio de la frecuencia
+osc_lo_freq = abs(fftshift(fft(osc_lo)));
+f_osc_lo = linspace(-fs/2, fs/2, length(osc_lo_freq)); % Frecuencias para el oscilador local
 
-% Transformada de Fourier de la señal mezclada
-N = length(t);
-FFT_mixed = fft(mixed_signal);
-f = linspace(-fs/2, fs/2, N);
+% Mezclar la señal de prueba con el oscilador local para obtener la señal IF
+IF_signal = FMmodulada .* osc_lo;
 
-% Crear un filtro pasabajo en el dominio de la frecuencia
-fc = (freq_FI + bandwidth/2) / (fs/2); % Frecuencia de corte normalizada
-H = double(abs(f) <= fc * fs/2);
+% Transformar la señal IF al dominio de la frecuencia
+IF_signal_freq = abs(fftshift(fft(IF_signal)));
+f_IF = linspace(-fs/2, fs/2, length(IF_signal_freq)) * fs / length(IF_signal_freq); % Frecuencias para la señal IF
 
-% Aplicar el filtro a la señal en el dominio de la frecuencia
-filtered_FFT = FFT_mixed .* fftshift(H);
+% Aplicar filtro pasa alto
+N = 500; % Orden del filtro
+Fc = 10.7e6 / (fs / 2); % Frecuencia de corte normalizada
+h = fir1(N, Fc, 'high'); % Diseño del filtro FIR pasa alto
+IF_signal_filtrada = filter(h, 1, IF_signal);
 
-% Transformada inversa de Fourier para obtener la señal filtrada
-filtered_signal = ifft(filtered_FFT);
+% Transformar la señal IF filtrada al dominio de la frecuencia
+IF_signal_filtrada_freq = abs(fftshift(fft(IF_signal_filtrada)));
 
-% Visualización de los resultados en el dominio del tiempo
-figure('Position', [100, 100, 1200, 800]);
+% Identificar las componentes de frecuencia significativas
+magnitudes = abs(IF_signal_freq);
+magnitudes_filtrada = abs(IF_signal_filtrada_freq);
+threshold = max(magnitudes) * 0.1; % Umbral para identificar picos significativos
 
-subplot(4,1,1);
-plot(t, signal_RF);
-title('Señal de RF (110 MHz)');
-xlabel('Tiempo (s)');
-ylabel('Amplitud');
+% Encuentra los picos manualmente
+peaks = [];
+locs = [];
+for i = 2:length(magnitudes)-1
+    if magnitudes(i) > magnitudes(i-1) && magnitudes(i) > magnitudes(i+1) && magnitudes(i) > threshold
+        peaks = [peaks; magnitudes(i)];
+        locs = [locs; i];
+    end
+end
 
-subplot(4,1,2);
-plot(t, signal_LO);
-title('Señal del Oscilador Local (99.3 MHz)');
-xlabel('Tiempo (s)');
-ylabel('Amplitud');
+% Calcular el desplazamiento desde la frecuencia central
+frecuencia_central = 10.7e6;
+desplazamiento_derecha = max(f_IF(locs) - frecuencia_central);
+desplazamiento_izquierda = min(f_IF(locs) - frecuencia_central);
 
-subplot(4,1,3);
-plot(t, mixed_signal);
-title('Señal Mezclada (FI sin filtrar)');
-xlabel('Tiempo (s)');
-ylabel('Amplitud');
+disp(['Desplazamiento hacia la derecha: ', num2str(desplazamiento_derecha), ' Hz']);
+disp(['Desplazamiento hacia la izquierda: ', num2str(desplazamiento_izquierda), ' Hz']);
 
-subplot(4,1,4);
-plot(t, real(filtered_signal));
-title('Señal Filtrada (FI de 10.7 MHz)');
-xlabel('Tiempo (s)');
-ylabel('Amplitud');
+% Valores numéricos de las componentes significativas
+componentes_significativas = f_IF(locs);
+disp('Componentes significativas en la señal IF:');
+disp(num2str(componentes_significativas, '%.0f'));
 
-% Visualización de los resultados en el dominio de la frecuencia
-figure('Position', [100, 100, 1200, 800]);
+% Magnitudes de los picos significativos
+magnitudes_picos = peaks;
+disp('Magnitudes de los picos significativos:');
+disp(num2str(magnitudes_picos, '%.2f'));
 
-subplot(4,1,1);
-plot(f, abs(fftshift(fft(signal_RF))));
-title('Espectro de Frecuencia de la Señal RF');
+% Mostrar frecuencias y magnitudes significativas juntas
+disp('Frecuencia (Hz)    Magnitud');
+for i = 1:length(componentes_significativas)
+    disp([num2str(componentes_significativas(i), '%.0f'), '    ', num2str(magnitudes_picos(i), '%.2f')]);
+end
+
+% Graficar las señales en el dominio de la frecuencia
+figure('Position', [100, 100, 1200, 800]); % Crear figura más grande
+
+% Primer grupo de gráficas
+subplot(2,1,1);
+plot(f_FMmodulada, FMmodulada_freq);
+title('Señal de Prueba en el Dominio de la Frecuencia');
 xlabel('Frecuencia (Hz)');
-ylabel('Amplitud');
+ylabel('Magnitud');
+xlim([109.7e6, 110.7e6]); % Ajustar el rango a 109.7 MHz a 110.7 MHz
 
-subplot(4,1,2);
-plot(f, abs(fftshift(fft(signal_LO))));
-title('Espectro de Frecuencia de la Señal LO');
+subplot(2,1,2);
+plot(f_osc_lo + f_lo, osc_lo_freq);
+title('Señal del Oscilador Local en el Dominio de la Frecuencia');
 xlabel('Frecuencia (Hz)');
-ylabel('Amplitud');
+ylabel('Magnitud');
+xlim([f_lo - 1e6, f_lo + 1e6]); % Mostrar un rango más amplio alrededor de 120.7 MHz
 
-subplot(4,1,3);
-plot(f, abs(fftshift(FFT_mixed)));
-title('Espectro de Frecuencia de la Señal Mezclada');
+% Segundo grupo de gráficas
+figure('Position', [100, 100, 1200, 800]); % Crear figura más grande
+
+subplot(2,1,1);
+plot(f_IF, IF_signal_freq); % Ajustar para centrar en 10.7 MHz
+title('Señal Intermedia (IF) en el Dominio de la Frecuencia (sin filtrar)');
 xlabel('Frecuencia (Hz)');
-ylabel('Amplitud');
+ylabel('Magnitud');
+xlim([10.6e6, 10.8e6]); % Mostrar un rango más cerrado alrededor de 10.7 MHz para mejor visualización
 
-subplot(4,1,4);
-plot(f, abs(fftshift(filtered_FFT)));
-title('Espectro de Frecuencia de la Señal Filtrada');
+subplot(2,1,2);
+plot(f_IF, IF_signal_filtrada_freq); % Ajustar para centrar en 10.7 MHz
+title('Señal IF Filtrada en el Dominio de la Frecuencia');
 xlabel('Frecuencia (Hz)');
-ylabel('Amplitud');
-
-
-
+ylabel('Magnitud');
+xlim([10.6e6, 10.8e6]); % Mostrar un rango más cerrado alrededor de 10.7 MHz para mejor visualización

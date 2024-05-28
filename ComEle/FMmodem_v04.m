@@ -1,5 +1,5 @@
 % Parámetros iniciales
-fs = 25e6; % Frecuencia de muestreo (Hz)
+fs = 50e6; % Frecuencia de muestreo (Hz)
 t = linspace(0, 1, fs); % Vector de tiempo de 1 segundo
 
 % Crear señal de prueba centrada en 110 MHz con componentes en frecuencias específicas
@@ -30,7 +30,7 @@ IF_signal = FMmodulada .* osc_lo;
 
 % Transformar la señal IF al dominio de la frecuencia
 IF_signal_freq = fftshift(fft(IF_signal));
-f_IF = linspace(-fs/2, fs/2, length(IF_signal_freq)) * fs / length(IF_signal_freq); % Frecuencias para la señal IF
+f_IF = linspace(-fs/2, fs/2, length(IF_signal_freq)) * (fs/length(IF_signal_freq)); % Frecuencias para la señal IF
 
 % Identificar las componentes de frecuencia significativas
 magnitudes = abs(IF_signal_freq);
@@ -93,7 +93,7 @@ plot(f_IF, abs(IF_signal_freq)); % Ajustar para centrar en 10.7 MHz
 title('Señal Intermedia (IF) en el Dominio de la Frecuencia (sin filtrar)');
 xlabel('Frecuencia (Hz)');
 ylabel('Magnitud');
-xlim([5e6, 15e6]); % Mostrar un rango más cerrado alrededor de 10.7 MHz para mejor visualización
+xlim([frecuencia_central - 5e6, frecuencia_central + 5e6]); % Mostrar un rango más cerrado alrededor de 10.7 MHz para mejor visualización
 
 % Segundo grupo de gráficas
 figure;
@@ -103,7 +103,7 @@ plot(f_IF, abs(IF_signal_freq)); % Ajustar para centrar en 10.7 MHz
 title('Producto del Filtro IF Centrado en el Dominio de la Frecuencia (sin filtrar)');
 xlabel('Frecuencia (Hz)');
 ylabel('Magnitud');
-xlim([5e6, 15e6]); % Mostrar un rango más cerrado alrededor de 10.7 MHz para mejor visualización
+xlim([frecuencia_central - 5e6, frecuencia_central + 5e6]); % Mostrar un rango más cerrado alrededor de 10.7 MHz para mejor visualización
 
 subplot(2,1,2);
 plot(f_IF, abs(IF_signal_freq)); % Ajustar para centrar en 10.7 MHz
@@ -112,7 +112,7 @@ plot(f_IF(locs), peaks, 'ro'); % Marcar los picos significativos
 title('Componentes Significativas en la Señal IF');
 xlabel('Frecuencia (Hz)');
 ylabel('Magnitud');
-xlim([5e6, 15e6]); % Mostrar un rango más cerrado alrededor de 10.7 MHz para mejor visualización
+xlim([frecuencia_central - 5e6, frecuencia_central + 5e6]); % Mostrar un rango más cerrado alrededor de 10.7 MHz para mejor visualización
 hold off;
 
 % Verificaciones adicionales

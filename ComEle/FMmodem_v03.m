@@ -14,7 +14,7 @@ Center = 1;
 
 BandWidth = 120000; % Frecuencia central (Hz)
 FXporta = 110000000;  % Ancho de banda (Hz)
-fxpiloto = 1875; %  hz
+fxpiloto = 1875; % 1875 hz
 fxbase = fxpiloto * 2; % 3750 hz
 fxbaja = fxpiloto * 7; % 13125 hz
 fxmedia = fxpiloto * 17; % 31875  hz
@@ -28,13 +28,13 @@ fxalta = fxpiloto * 27; % 50625 hz
 % se usan para que sirvan de salvaguarda entre las subportadoras, separando cada subportadora + frecuencia maxima en 
 % 5000 hz partiendo de la frecuencia de 19000
 % y tomando lo anterior expuesto es que sacamos los valores de las otras subportadoras 
-% que para referencia serán 13125, 31875 y 50625
-espacio_guarda = 3750; % hz
-FmaxAudioMax = 15000;
+% que para referencia serán 19000, 39000 y 59000
+espacio_guarda = 3500; % hz
+FmaxAudio = 15000;
 
 % Cálculo del índice de modulación
 HBW = BandWidth / 2;
-IndMod =  HBW / FmaxAudioMax;
+IndMod =  HBW / FmaxAudio;
 
 % Generación de las señales
 fxRight = sin(2*pi*Right*t);
@@ -56,7 +56,7 @@ desCH03 = sin(2*pi*(fxCenter + fxAlta).*t);
 subporta = fxPiloto + desCH01 + desCH02 + desCH03;
 
 % Modulación FM
-FMmodulada = cos(2*pi*FXporta*t + IndMod*subporta)
+FMmodulada = cos(2*pi*FXporta*t + IndMod*subporta);
 
 % Transformada de Fourier
 N = length(t);
