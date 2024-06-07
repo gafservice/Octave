@@ -1,0 +1,263 @@
+% Par�metros iniciales
+fs = 25e6; % Frecuencia de muestreo (Hz)
+t = linspace(0, 1, fs); % Vector de tiempo de 1 segundo
+
+% Crear se�al de prueba centrada en 110 MHz con componentes en frecuencias espec�ficas
+fc = 110e6; % Frecuencia central de 110 MHz
+f1 = 1875; % Frecuencia de 1875 Hz
+f2 = 13125; % Frecuencia de 13125 Hz
+f3 = 31875; % Frecuencia de 31875 Hz
+f4 = 58625; % Frecuencia de 58625 Hz
+
+Right = 100;
+Left = 1;
+Center = 1;
+
+BandWidth = 120000; % Ancho de banda (Hz)
+FXporta = 110e6; % Frecuencia portadora (Hz)
+fxpiloto = 1875; % 1875 Hz
+fxbase = fxpiloto * 2; % 3750 Hz
+fxbaja = fxpiloto * 7; % 13125 Hz
+fxmedia = fxpiloto * 17; % 31875 Hz
+fxalta = fxpiloto * 27; % 50625 Hz
+
+% Generaci�n de las se�ales
+fxRight = sin(2 * pi * Right * t);
+fxLeft = sin(2 * pi * Left * t);
+fxCenter = sin(2 * pi * Center * t);
+
+% Generaci�n de subportadoras
+fxPiloto = sin(2 * pi * fxpiloto * t);
+fxBaja = sin(2 * pi * fxbaja * t);
+fxMedia = sin(2 * pi * fxmedia * t);
+fxAlta = sin(2 * pi * fxalta * t);
+
+% Desplazamiento por medio de multiplicaci�n 
+desCH01 = sin(2 * pi * (fxRight + fxbaja) .* t); % Multiplicaci�n element-wise
+desCH02 = sin(2 * pi * (fxLeft + fxmedia) .* t);
+desCH03 = sin(2 * pi * (fxCenter + fxalta) .* t);
+
+% Generar la se�al de prueba (modulaci�n de amplitud)
+subporta = fxPiloto + desCH01 + cos(2 * pi * f3 * t) + cos(2 * pi * f4 * t);
+IndMod = 0.5; % �ndice de modulaci�n (ajusta seg�n sea necesario)
+FMmodulada = cos(2 * pi * FXporta * t + IndMod * subporta);
+
+% Transformar la se�al de prueba al dominio de la frecuencia
+FMmodulada_freq = fftshift(fft(FMmodulada));
+f_FMmodulada = linspace(-fs/2, fs/2, length(FMmodulada_freq)); % Frecuencias para la se�al de prueba
+
+% Crear oscilador local de 120.7 MHz para obtener una IF de 10.7 MHz
+f_lo = 120.7e6; % Frecuencia del oscilador local
+osc_lo = cos(2 * pi * f_lo * t); % Se�al del oscilador local
+
+% Transformar el oscilador local al dominio de la frecuencia
+osc_lo_freq = fftshift(fft(osc_lo));
+f_osc_lo = linspace(-fs/2, fs/2, length(osc_lo_freq)); % Frecuencias para el oscilador local
+
+% Mezclar la se�al de prueba con el oscilador local para obtener la se�al IF
+IF_signal = FMmodulada .* osc_lo;
+
+% Transformar la se�al IF al dominio de la frecuencia
+IF_signal_freq = fftshift(fft(IF_signal));
+f_IF = linspace(-fs/2, fs/2, length(IF_signal_freq)) * fs / length(IF_signal_freq); % Frecuencias para la se�al IF
+
+% Identificar las componentes de frecuencia significativas
+magnitudes = abs(IF_signal_freq);
+threshold = max(magnitudes) * 0.1; % Umbral para identificar picos significativos
+
+% Encuentra los picos manualmente
+peaks = [];
+locs = [];
+for i = 2:length(magnitudes)-1
+    if magnitudes(i) > magnitudes(i-1) && magnitudes(i) > magnitudes(i+1) && magnitudes(i) > threshold
+        peaks = [peaks; magnitudes(i)];
+        locs = [locs; i];
+    end
+end
+
+% Calcular el desplazamiento desde la frecuencia central
+frecuencia_central = 10.7e6;
+desplazamiento_derecha = max(f_IF(locs) - frecuencia_central);
+desplazamiento_izquierda = min(f_IF(locs) - frecuencia_central);
+
+disp(['Desplazamiento hacia la derecha: ', num2str(desplazamiento_derecha), ' Hz']);
+disp(['Desplazamiento hacia la izquierda: ', num2str(desplazamiento_izquierda), ' Hz']);
+
+% Valores num�ricos de las componentes significativas
+componentes_significativas = f_IF(locs);
+disp('Componentes significativas en la se�al IF:');
+disp(num2str(componentes_significativas, '%.0f'));
+
+% Magnitudes de los picos significativos
+magnitudes_picos = peaks;
+disp('Magnitudes de los picos significativos:');
+disp(num2str(magnitudes_picos, '%.2f'));
+
+% Mostrar frecuencias y magnitudes significativas juntas
+disp('Frecuencia (Hz)    Magnitud');
+for i = 1:length(componentes_significativas)
+    disp([num2str(componentes_significativas(i), '%.0f'), '    ', num2str(magnitudes_picos(i), '%.2f')]);
+end
+
+% Graficar las se�ales en el dominio de la frecuencia de forma independiente
+figure;
+plot(f_FMmodulada + fc, abs(FMmodulada_freq));
+title('Se�al de Prueba en el Dominio de la Frecuencia');
+xlabel('Frecuencia (Hz)');
+ylabel('Magnitud');
+xlim([fc - 1e4, fc + 1e4]); % Mostrar un rango m�s amplio alrededor de 110 MHz
+
+figure;
+plot(f_osc_lo + f_lo, abs(osc_lo_freq));
+title('Se�al del Oscilador Local en el Dominio de la Frecuencia');
+xlabel('Frecuencia (Hz)');
+ylabel('Magnitud');
+xlim([f_lo - 1e4, f_lo + 1e4]); % Mostrar un rango m�s amplio alrededor de 120.7 MHz
+
+figure;
+plot(f_IF, abs(IF_signal_freq)); % Ajustar para centrar en 10.7 MHz
+title('Se�al Intermedia (IF) en el Dominio de la Frecuencia (sin filtrar)');
+xlabel('Frecuencia (Hz)');
+ylabel('Magnitud');
+xlim([5e6, 15e6]); % Mostrar un rango m�s cerrado alrededor de 10.7 MHz para mejor visualizaci�n
+
+figure;
+plot(f_IF, abs(IF_signal_freq)); % Ajustar para centrar en 10.7 MHz
+hold on;
+plot(f_IF(locs), peaks, 'ro'); % Marcar los picos significativos
+title('Componentes Significativas en la Se�al IF');
+xlabel('Frecuencia (Hz)');
+ylabel('Magnitud');
+xlim([10.6e6, 10.8e6]); % Mostrar un rango m�s cerrado alrededor de 10.7 MHz para mejor visualizaci�n
+hold off;
+
+% Filtrar la se�al IF para extraer la componente de 13125 Hz (subportadora)
+f_subcarrier = 13125; % Frecuencia de la subportadora
+ancho_banda = 15000; % Ancho de banda de la subportadora (Hz)
+
+% Crear un filtro paso banda centrado en 10.7 MHz +/- 13125 Hz
+Wn = [(frecuencia_central + f_subcarrier - ancho_banda/2) / (fs/2), (frecuencia_central + f_subcarrier + ancho_banda/2) / (fs/2)];
+
+[b_bandpass, a_bandpass] = butter(4, Wn, 'bandpass')
+
+% Aplicar el filtro paso banda
+subportadora_filtrada = filter(b_bandpass, a_bandpass, IF_signal);
+
+% Transformar la subportadora filtrada al dominio de la frecuencia
+subportadora_filtrada_freq = fftshift(fft(subportadora_filtrada));
+f_subportadora_filtrada = linspace(-fs/2, fs/2, length(subportadora_filtrada_freq));
+
+% Demodular la subportadora para extraer la se�al de prueba de 10 Hz
+demodulated_signal = subportadora_filtrada .* cos(2 * pi * f_subcarrier * t);
+
+% Filtrar nuevamente para eliminar la componente de alta frecuencia
+[b_lowpass, a_lowpass] = butter(4, 20/(fs/2)); % Filtro pasa baja con frecuencia de corte de 20 Hz
+demodulated_signal = filter(b_lowpass, a_lowpass, demodulated_signal);
+
+% Transformar la se�al demodulada al dominio de la frecuencia
+demodulated_signal_freq = fftshift(fft(demodulated_signal));
+f_demodulated_signal = linspace(-fs/2, fs/2, length(demodulated_signal_freq));
+
+% Graficar la se�al demodulada en el dominio del tiempo y frecuencia
+figure;
+plot(t, demodulated_signal);
+title('Se�al Demodulada en el Dominio del Tiempo');
+xlabel('Tiempo (s)');
+ylabel('Amplitud');
+xlim([0, 0.051]);
+
+figure;
+plot(f_demodulated_signal, abs(demodulated_signal_freq));
+title('Se�al Demodulada en el Dominio de la Frecuencia');
+xlabel('Frecuencia (Hz)');
+ylabel('Magnitud');
+xlim([-100, 100]);
+
+disp('Frecuencia central de la subportadora demodulada:');
+disp(num2str(f_subcarrier));
+
+% Filtrar la se�al IF para extraer la componente de 1875 Hz
+[b, a] = butter(4, 2000/(fs/2)); % Filtro Butterworth de 4� orden con frecuencia de corte de 2 kHz
+
+% Aplicar el filtro
+filtered_IF_signal = filter(b, a, IF_signal);
+
+% Demodular la se�al filtrada
+senal_piloto = filtered_IF_signal .* cos(2 * pi * frecuencia_central * t);
+
+% Filtrar nuevamente para eliminar la componente de alta frecuencia
+senal_piloto = filter(b, a, senal_piloto);
+
+% Transformar la se�al demodulada al dominio de la frecuencia
+senal_piloto_freq = fftshift(fft(senal_piloto));
+f_senal_piloto = linspace(-fs/2, fs/2, length(senal_piloto_freq));
+
+% Graficar la se�al piloto en el dominio de la frecuencia
+figure;
+plot(f_senal_piloto, abs(senal_piloto_freq));
+title('Se�al Piloto en el Dominio de la Frecuencia');
+xlabel('Frecuencia (Hz)');
+ylabel('Magnitud');
+xlim([-5e3, 5e3]); % Mostrar un rango cerrado alrededor de la frecuencia de 0 Hz
+
+% Encontrar el valor de la frecuencia m�s cercana a 1875 Hz antes del PLL
+[~, idx_antes_PLL] = min(abs(f_senal_piloto - 1875));
+frecuencia_antes_PLL = f_senal_piloto(idx_antes_PLL);
+disp(['Frecuencia antes del PLL: ', num2str(frecuencia_antes_PLL), ' Hz']);
+
+% Implementaci�n de un PLL b�sico para seguir la se�al piloto de 1875 Hz
+% Par�metros del PLL
+Kp = 0.1; % Ganancia proporcional
+Ki = 0.01; % Ganancia integral
+N = length(senal_piloto);
+f0 = 1875; % Frecuencia nominal de la se�al piloto
+vco_freq = zeros(1, N);
+phase_error = zeros(1, N);
+integral = 0;
+
+% Inicializaci�n del VCO
+vco_phase = 0;
+vco_output = zeros(1, N);
+
+% Bucle PLL
+for n = 1:N
+    % VCO
+    vco_output(n) = cos(2 * pi * f0 * t(n) + vco_phase);
+    
+    % Error de fase
+    phase_error(n) = senal_piloto(n) * vco_output(n);
+    
+    % Integrador
+    integral = integral + Ki * phase_error(n);
+    
+    % Controlador PI
+    vco_freq(n) = f0 + Kp * phase_error(n) + integral;
+    
+    % Actualizaci�n de la fase del VCO
+    if n < N
+        vco_phase = vco_phase + 2 * pi * vco_freq(n) / fs;
+    end
+end
+
+% Obtener el valor de la frecuencia despu�s del PLL
+frecuencia_despues_PLL = mean(vco_freq);
+
+% Calcular las variables fxbajadem, fxmediadem, fxaltadem
+fxbajadem = frecuencia_despues_PLL * 7;
+fxmediadem = frecuencia_despues_PLL * 17;
+fxaltadem = frecuencia_despues_PLL * 27;
+
+% Graficar la frecuencia del VCO
+figure;
+plot(t, vco_freq);
+title('Frecuencia del VCO del PLL');
+xlabel('Tiempo (s)');
+ylabel('Frecuencia (Hz)');
+xlim([0, 0.01]); % Mostrar una peque�a porci�n del tiempo para mejor visualizaci�n
+
+% Mostrar los valores
+disp(['Frecuencia antes del PLL: ', num2str(frecuencia_antes_PLL), ' Hz']);
+disp(['Frecuencia despu�s del PLL: ', num2str(frecuencia_despues_PLL), ' Hz']);
+disp(['fxbajadem: ', num2str(fxbajadem), ' Hz']);
+disp(['fxmediadem: ', num2str(fxmediadem), ' Hz']);
+disp(['fxaltadem: ', num2str(fxaltadem), ' Hz']);
